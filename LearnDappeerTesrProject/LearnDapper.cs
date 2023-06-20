@@ -2,6 +2,7 @@
 using LearnDappeerTesrProject;
 using System.Data;
 using System.Data.SqlClient;
+using Z.Dapper.Plus;
 
 namespace LearnDapperTestProject
 {
@@ -410,5 +411,40 @@ namespace LearnDapperTestProject
 			}
 
 		}
+
+		// Bulk insert Example 
+		public static void BulkExample()
+		{
+
+			using (SqlConnection connection =
+				   new("Data Source=SF-CPU-523;Initial Catalog=Product_Management;User ID=sa;Password=Abhi@15042002;"))
+			{
+				List<CategoryModel> categories = GiveMeDataForAddOfCategoryModel();
+
+				connection
+					.UseBulkOptions(op => op.InsertKeepIdentity = true)
+					.BulkInsert<CategoryModel>(categories);
+
+
+			}
+
+			Console.WriteLine("Inserting Complete");
+		}
+
+		private static List<CategoryModel> GiveMeDataForAddOfCategoryModel()
+		{
+			var list = new List<CategoryModel>();
+			var random = new Random();
+
+			for (int i = 0; i < 1000; i++)
+			{
+				list.Add(new CategoryModel() { CategoryName = $"CategoryTest{random.NextDouble()}" });
+			}
+
+
+			return list;
+		}
+
+
 	}
 }

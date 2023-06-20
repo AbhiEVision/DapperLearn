@@ -52,7 +52,9 @@
 
 // fifteen
 // LearnDapper.Test3OnJoin();
-                                                            
-// sixteen
-LearnDapper.TakingOutputParamFromQuery();
 
+// sixteen
+//LearnDapper.TakingOutputParamFromQuery();
+
+// Seventeen
+LearnDapper.BulkExample();
