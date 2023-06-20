@@ -1,6 +1,6 @@
-﻿using System.Data;
-using Dapper;
+﻿using Dapper;
 using LearnDappeerTesrProject;
+using System.Data;
 using System.Data.SqlClient;
 
 namespace LearnDapperTestProject
@@ -167,10 +167,11 @@ namespace LearnDapperTestProject
 			}
 		}
 
+		// Reader Example
 		public static void ExecuteReaderExample()
 		{
 			using (SqlConnection connection =
-			       new("Data Source=SF-CPU-523;Initial Catalog=Product_Management;User ID=sa;Password=Abhi@15042002;"))
+				   new("Data Source=SF-CPU-523;Initial Catalog=Product_Management;User ID=sa;Password=Abhi@15042002;"))
 			{
 				string command = "select * from Product";
 
@@ -184,10 +185,11 @@ namespace LearnDapperTestProject
 			}
 		}
 
+		// Reader Example with table
 		public static void ExecuteReaderExampleUsingDataTable()
 		{
 			using (SqlConnection connection =
-			       new("Data Source=SF-CPU-523;Initial Catalog=Product_Management;User ID=sa;Password=Abhi@15042002;"))
+				   new("Data Source=SF-CPU-523;Initial Catalog=Product_Management;User ID=sa;Password=Abhi@15042002;"))
 			{
 				string command = "select * from Product";
 
@@ -204,20 +206,209 @@ namespace LearnDapperTestProject
 			}
 		}
 
+		// Calling Stored Procedure without params
 		public static void CallingStoredProcedure()
 		{
 			using (SqlConnection connection =
-			       new("Data Source=SF-CPU-523;Initial Catalog=Product_Management;User ID=sa;Password=Abhi@15042002;"))
+				   new("Data Source=SF-CPU-523;Initial Catalog=Product_Management;User ID=sa;Password=Abhi@15042002;"))
 			{
 				string command = "showAllProduct";
 
-				var result = connection.Query<ProductModel>(command,commandType: CommandType.StoredProcedure);
+				var result = connection.Query<ProductModel>(command, commandType: CommandType.StoredProcedure);
 
 				foreach (var item in result)
 				{
 					Console.WriteLine($"name : {item.Name} :: id : {item.ID} :: price : {item.Price}");
 				}
 			}
+		}
+
+		// Calling stored procedure
+		public static void CallingStoredProcedureWithParams()
+		{
+			using (SqlConnection connection =
+				   new("Data Source=SF-CPU-523;Initial Catalog=Product_Management;User ID=sa;Password=Abhi@15042002;"))
+			{
+				string command = "updateProductName";
+
+				DynamicParameters parameters = new DynamicParameters();
+				parameters.Add("id", 1045);
+				parameters.Add("name", "testChange");
+
+				var result = connection.ExecuteScalar(command, parameters, commandType: CommandType.StoredProcedure);
+
+				Console.WriteLine($"Updated rows  : {result}");
+			}
+		}
+
+		// Adding Data using Table valued type!
+		public static void TableValuedParamsExample()
+		{
+			// Add this in database for this Example to run
+			//create type dbo.TVP_Cate
+			//as table
+			//(
+			//	CategoryName varchar(max)
+			//)
+
+			// After use drop this type using Below Command
+			// drop type dbo.TVP_Cate
+
+			DataTable tbToAdd = new DataTable();
+			//tbToAdd.Columns.Add("CategoryId", typeof(int));
+			tbToAdd.Columns.Add("CategoryName", typeof(string));
+
+			tbToAdd.Rows.Add("Category16");
+			tbToAdd.Rows.Add("Category17");
+			tbToAdd.Rows.Add("Category18");
+			tbToAdd.Rows.Add("Category19");
+
+			using (SqlConnection connection =
+				   new("Data Source=SF-CPU-523;Initial Catalog=Product_Management;User ID=sa;Password=Abhi@15042002;"))
+			{
+				var tvp = tbToAdd.AsTableValuedParameter("dbo.TVP_Cate");
+
+				var result = connection.Execute("insert into Categories select * from @TVP_Cate;",
+					param: new { TVP_People = tvp });
+
+				Console.WriteLine($"Added Rows : {result}");
+
+			}
+		}
+
+		// Join example first try
+		public static void JoinExampleUsingSplitOnOption()
+		{
+			string sql = "select " +
+						 "p.ID, p.Name, p.Price, c.CategoryId, c.CategoryName " +
+						 "from " +
+						 "Product p left join Categories c " +
+						 "on p.CategoryID = c.CategoryId";
+
+			using (SqlConnection connection =
+				   new("Data Source=SF-CPU-523;Initial Catalog=Product_Management;User ID=sa;Password=Abhi@15042002;"))
+			{
+				var productsWithData = connection.Query<CategoryModel, ProductModel, CategoryModel>(sql,
+					(product, category) =>
+					{
+						product.CategoryID = category.CategoryId;
+						//category.CategoryId = product.CategoryID;
+						return product;
+					},
+				splitOn: "CategoryID").ToList();
+
+				foreach (var item in productsWithData)
+				{
+					Console.WriteLine(item.CategoryID);
+				}
+
+				Console.WriteLine("Nothing");
+
+			}
+
+		}
+
+		// Join Test 2
+		public static void Test2OnJoin()
+		{
+			string sql = "select " +
+						 "p.ID, p.Name, p.Price, c.CategoryId, c.CategoryName " +
+						 "from " +
+						 "Product p right join Categories c " +
+						 "on p.CategoryID = c.CategoryId";
+
+			using (SqlConnection connection =
+				   new("Data Source=SF-CPU-523;Initial Catalog=Product_Management;User ID=sa;Password=Abhi@15042002;"))
+			{
+				var result = connection.Query<ProductModel, CategoryModel, FullProductModel>(
+					sql,
+					(pro, cat) =>
+						{
+							pro.CategoryId = cat.CategoryID;
+							return new FullProductModel()
+							{
+								ID = pro.ID,
+								Name = pro.Name,
+								Price = pro.Price,
+								CategoryId = cat.CategoryID,
+								CategoryName = cat.CategoryName
+							};
+						},
+						splitOn: "CategoryID").ToList();
+
+				int i = 1;
+				foreach (var item in result)
+				{
+					Console.WriteLine(i++);
+					Console.WriteLine($"ProductId : {item.ID} \t productName : {item.Name} \t CategoryID : {item.CategoryId} \t CategoryName : {item.CategoryName}");
+
+				}
+
+			}
+
+		}
+
+		// With parameter passing in join
+		public static void Test3OnJoin()
+		{
+			string sql = "select p.ID, p.Name, p.Price, c.CategoryId, c.CategoryName from Product p left join Categories c on p.CategoryID = c.CategoryId where p.CategoryID = @id";
+
+
+			var parameter = new
+			{
+				id = 10
+			};
+
+			using (SqlConnection connection =
+				   new("Data Source=SF-CPU-523;Initial Catalog=Product_Management;User ID=sa;Password=Abhi@15042002;"))
+			{
+				var result = connection.Query<ProductModel, CategoryModel, FullProductModel>(
+					sql,
+					(pro, cat) =>
+					{
+						pro.CategoryId = cat.CategoryID;
+						return new FullProductModel()
+						{
+							ID = pro.ID,
+							Name = pro.Name,
+							Price = pro.Price,
+							CategoryId = cat.CategoryID,
+							CategoryName = cat.CategoryName
+						};
+					},
+					parameter,
+					splitOn: "CategoryID").ToList();
+
+				int i = 1;
+				foreach (var item in result)
+				{
+					Console.WriteLine(i++);
+					Console.WriteLine(
+						$"ProductId : {item.ID} \t productName : {item.Name} \t CategoryID : {item.CategoryId} \t CategoryName : {item.CategoryName}");
+
+				}
+			}
+		}
+
+		// Output Parameter from Query!
+		public static void TakingOutputParamFromQuery()
+		{
+			using (SqlConnection connection =
+				   new("Data Source=SF-CPU-523;Initial Catalog=Product_Management;User ID=sa;Password=Abhi@15042002;"))
+			{
+				string sql = "select * from Product where CategoryID = @catID; select @id = @@TOTAL_READ;";
+
+				var parameters = new DynamicParameters();
+				parameters.Add("catID", 10);
+				parameters.Add("id", DbType.Int32, direction: ParameterDirection.Output);
+
+				connection.Execute(sql, parameters);
+
+				int result = parameters.Get<int>("@id");
+
+				Console.WriteLine($"result is : {result}");
+			}
+
 		}
 	}
 }
