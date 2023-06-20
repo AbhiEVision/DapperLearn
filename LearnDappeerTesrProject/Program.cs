@@ -57,4 +57,7 @@
 //LearnDapper.TakingOutputParamFromQuery();
 
 // Seventeen
-LearnDapper.BulkExample();
+// LearnDapper.BulkExample();
+
+
+LearnDapper.TestFormLaptopForBulkMerge();

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace LearnDappeerTesrProject
 {
-	public class CategoryModel
+	public class Category
 	{
 		public int CategoryID {  get; set; }
 
