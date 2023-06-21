@@ -1,5 +1,4 @@
-﻿using LearnDapperTestProject;
-
+﻿
 // first
 //LearnDapper.MappingToModel();
 
@@ -57,7 +56,19 @@
 //LearnDapper.TakingOutputParamFromQuery();
 
 // Seventeen
-// LearnDapper.BulkExample();
+//LearnDapper.BulkExample();
+
+// Eighteen
+//LearnDapper.BulkExampleDelete();
+
+// Nineteen
+//LearnDapper.BulkExampleUpdate();
+
+// Twenty
+//LearnDapper.BulkExampleMerge();
 
 
-LearnDapper.TestFormLaptopForBulkMerge();
+// Bulk Example form Laptop
+//LearnDapper.TestFormLaptopForBulkMerge();
+
+
